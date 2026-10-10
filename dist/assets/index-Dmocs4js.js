@@ -1,0 +1,26 @@
+import{t as e}from"./nav-CvkbhMZM.js";var t=document.getElementById(`app`),n=[[`Client`,`#7aa2f7`,`SQL text`,`The client sends <b>SELECT name FROM users WHERE id = 42</b> over the wire protocol.`],[`Parser`,`#bb9af7`,`AST`,`The lexer and parser turn text into a syntax tree. No table knowledge yet.`],[`Binder`,`#bb9af7`,`bound AST`,`Names are resolved against the <b>catalog</b>: users is table 16384, id is INT.`],[`Optimizer`,`#e0af68`,`physical plan`,`Statistics say id is unique, so an <b>index lookup</b> beats a scan. Cost: ~3 page reads.`],[`Executor`,`#9ece6a`,`tuples`,`Operators pull (or push) tuples or vectors through the plan.`],[`Txn + Buffer pool`,`#f7768e`,`pages / versions`,`MVCC picks the visible row version; the buffer pool serves the 8 KB page from memory.`],[`Storage`,`#2ac3de`,`bytes`,`On a miss: one NVMe read (~100 us). Updates would also append to the <b>WAL</b> first.`]],r=n.map(([e,t,r],i)=>{let a=10+i*(950/(n.length-1));return`<g class="box" data-i="${i}"><rect x="${a}" y="50" width="120" height="64" rx="10" stroke="${t}"/><text x="${a+60}" y="78" text-anchor="middle">${e}</text><text class="sub" x="${a+60}" y="98" text-anchor="middle">${r}</text></g>`}).join(``),i=n.map((e,t)=>10+t*(950/(n.length-1))+60),a=`M${i[0]},82 `+i.slice(1).map(e=>`L${e},82`).join(` `);t.innerHTML=`<div class="land">
+<section class="hero"><h1>See inside the database.</h1>
+<p>An interactive lab for how SQL engines really work: from a parsed query to bytes on disk, and across a cluster. Built around CMU 15-445 and 15-721, with a focus on how one design choice ripples through every other component.</p></section>
+<section class="cards">
+ <a class="card" style="--c:#2ac3de" href="/explore.html"><div class="ic">◈</div><h3>3D Explorer</h3><p>Fly through components, zoom into a B+tree or a Raft log, swap design choices and see what changes.</p><span class="go">Explore →</span></a>
+ <a class="card" style="--c:#9ece6a" href="/learn.html"><div class="ic">☰</div><h3>Learn</h3><p>An 18-chapter course with interactive demos, trade-off tables, quizzes and CMU references.</p><span class="go">Start course →</span></a>
+ <a class="card" style="--c:#e0af68" href="/compare.html"><div class="ic">⇄</div><h3>Compare</h3><p>MySQL, Postgres, DuckDB, ClickHouse, Spark, Cassandra, FoundationDB and more, side by side.</p><span class="go">Compare →</span></a>
+</section>
+<section class="sec"><h2>The life of a query</h2><p>Seven components, seven narrow interfaces. Watch a point lookup travel through the engine.</p>
+<div class="life"><svg viewBox="0 0 1140 150" role="img" aria-label="A query flowing through client, parser, binder, optimizer, executor, transaction and buffer pool, and storage">
+ ${i.slice(0,-1).map((e,t)=>`<line x1="${e+60}" y1="82" x2="${i[t+1]-60}" y2="82" stroke="#2a3350" stroke-width="2"/>`).join(``)}${r}
+ <path id="route" d="${a}" fill="none"/>
+ <circle class="pkt" r="7" fill="#fff" color="#7aa2f7"><animateMotion dur="9s" repeatCount="indefinite" calcMode="linear"><mpath href="#route"/></animateMotion></circle>
+ <circle id="hl" cx="${i[0]}" cy="82" r="0"/>
+</svg><div class="cap" id="cap"></div></div></section>
+<section class="sec"><h2>OLTP vs OLAP at a glance</h2><p>Same SQL, opposite physical needs. Nearly every design decision in the course follows from which side you optimise for.</p>
+<div class="two">
+ <div class="col"><div class="tag" style="color:#9ece6a">OLTP</div><h3>Many tiny transactions</h3>
+ <svg viewBox="0 0 300 70"><g>${Array.from({length:6},(e,t)=>`<rect x="${8+t*48}" y="10" width="40" height="50" rx="4" fill="#1d2540" stroke="#2a3350"/>`).join(``)}<rect x="104" y="10" width="40" height="50" rx="4" fill="#9ece6a" opacity=".85"/></g></svg>
+ <ul><li>Touch a few rows by key, latency in ms</li><li>Row store + B+tree/LSM, WAL, MVCC or 2PL</li><li>Tuple-at-a-time execution is fine</li><li>MySQL, PostgreSQL, TigerBeetle, FoundationDB</li></ul></div>
+ <div class="col"><div class="tag" style="color:#7aa2f7">OLAP</div><h3>Few huge scans</h3>
+ <svg viewBox="0 0 300 70"><g>${Array.from({length:6},(e,t)=>`<rect x="${8+t*48}" y="10" width="40" height="50" rx="4" fill="${t===2?`#7aa2f7`:`#1d2540`}" stroke="#2a3350" opacity="${t===2?.9:1}"/>`).join(``)}</g></svg>
+ <ul><li>Scan billions of values of a few columns</li><li>Column store, compression, zone maps</li><li>Vectorized or compiled, morsel-parallel</li><li>DuckDB, ClickHouse, StarRocks, Spark SQL</li></ul></div>
+</div></section>
+<div class="stats"><div><b>7</b>layers</div><div><b>18</b>chapters</div><div><b>~70</b>components</div><div><b>15+</b>real systems</div></div>
+<div class="foot">Everything runs locally in your browser. Start with <a href="/learn.html#ch=0">chapter 0</a>.</div></div>`;var o=document.getElementById(`cap`),s=[...t.querySelectorAll(`.box rect`)],c=-1,l=performance.now();function u(){let e=(performance.now()-l)/9e3%1*(n.length-1),t=Math.min(n.length-1,Math.round(e));t!==c&&(c=t,o.innerHTML=`<b>${t+1}. ${n[t][0]}</b>: ${n[t][3]}`,s.forEach((e,r)=>e.style.fill=r===t?n[r][1]+`33`:``)),requestAnimationFrame(u)}u(),e(`index`);
