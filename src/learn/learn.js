@@ -82,7 +82,8 @@ async function show(n) {
   });
   const comps = ch.components || [];
   const links = h('div', { class: 'links' },
-    ...comps.slice(0, 4).map((c) => h('a', { href: `/explore.html#c=${c}` }, `Open in 3D explorer: ${c}`)));
+    ...comps.slice(0, 4).map((c) => h('a', { href: `/explore.html#c=${c}` }, `Open in 3D explorer: ${c}`)),
+    h('a', { href: `/video.html#chapter=${n}` }, 'Watch in video'));
   const ripples = (ch.ripples || []).length ? h('div', { class: 'callout ripple' }, h('div', { class: 't' }, 'How it affects other components'),
     h('ul', ch.ripples.map((r) => { const li = h('li'); li.innerHTML = `<b>${r.to}</b>: ${r.text}`; return li; }))) : null;
   const refs = (ch.refs || []).length ? h('div', { class: 'refs' }, h('h2', 'References'), h('ul', ch.refs.map((r) => h('li', h('a', { href: r.url, target: '_blank', rel: 'noopener' }, r.title))))) : null;

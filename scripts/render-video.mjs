@@ -1,9 +1,9 @@
-// Offline deterministic render: node scripts/render-video.mjs [--workers 4] [--fps 30] [--from 0 --to <sec>] [--out video/db-internals.mp4] [--port 5182] [--noaudio] [--noserver]
+// Offline deterministic render: node scripts/render-video.mjs [--workers 4] [--fps 30] [--from 0 --to <sec>] [--out public/video/db-internals.mp4] [--port 5182] [--noaudio] [--noserver]
 // Steps renderAt(t) per frame in headless Chrome (puppeteer-core), pipes JPEG frames into ffmpeg (libx264). Several workers render time
 // slices in parallel into segment files that are concatenated. Narration audio is synthesised with macOS `say` and muxed (skip with --noaudio).
 import puppeteer from 'puppeteer-core'; import { spawn, execFileSync } from 'child_process'; import fs from 'fs'; import path from 'path'; import os from 'os';
 const a = process.argv.slice(2); const get = (k, d) => { const i = a.indexOf('--' + k); return i >= 0 ? a[i + 1] : d; }; const has = k => a.includes('--' + k);
-const FPS = +get('fps', 30), WORKERS = +get('workers', 4), PORT = +get('port', 5182), OUT = path.resolve(get('out', 'video/db-internals.mp4'));
+const FPS = +get('fps', 30), WORKERS = +get('workers', 4), PORT = +get('port', 5182), OUT = path.resolve(get('out', 'public/video/db-internals.mp4'));
 const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'; const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'dbvid-'));
 let server; let base = `http://localhost:${PORT}`;
 async function up() { try { return (await fetch(base + '/video.html')).ok; } catch { return false; } }

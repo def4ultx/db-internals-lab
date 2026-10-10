@@ -15,3 +15,7 @@ thumb
 sketch
 
 # End of https://www.toptal.com/developers/gitignore/api/react
+# rendered video output (regenerate with: npm run render:video)
+public/video/*.mp4
+public/video/*.webm
+video/*.mp4

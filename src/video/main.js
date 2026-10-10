@@ -18,8 +18,6 @@ function initPlayer() {
   <style>
     .vwrap{max-width:1500px;margin:0 auto;padding:18px 20px 60px}
     .vwrap h1{margin:6px 0 4px;font-size:26px}.vwrap .sub{color:var(--dim);margin:0 0 16px}
-    .tabs{display:flex;gap:8px;margin-bottom:14px}.tabs button{background:#171d2e;color:var(--fg);border:1px solid var(--line);padding:8px 16px;border-radius:8px;cursor:pointer;font-size:15px}
-    .tabs button.on{background:#25305a;border-color:var(--accent)}
     .stage{display:grid;grid-template-columns:1fr 300px;gap:16px}
     @media(max-width:1100px){.stage{grid-template-columns:1fr}}
     .screen{background:#000;border:1px solid var(--line);border-radius:10px;overflow:hidden;position:relative}
@@ -41,11 +39,8 @@ function initPlayer() {
   </style>
   <div class="vwrap">
     <h1>How a SQL database works &mdash; the motion-graphic film</h1>
-    <p class="sub">10 chapters, ~10 minutes: query life-cycle, optimizer, execution, storage, columnar, transactions, durability, distributed systems and how the choices ripple. Play the rendered video, or the interactive live-render player (scrub, chapters, captions, optional narration).</p>
-    <div class="tabs"><button id="tabV" class="on">Rendered video (MP4)</button><button id="tabL">Live render player</button></div>
-    <div id="paneV"><div class="screen"><video id="vid" controls preload="metadata" playsinline><source src="/video/db-internals.mp4" type="video/mp4"><source src="/video/db-internals.webm" type="video/webm"></video></div>
-      <p class="note" id="vnote">If the video does not load, use the Live render player: it draws the same frames in real time from the same timeline engine.</p></div>
-    <div id="paneL" style="display:none"><div class="stage"><div><div class="screen" id="screen"><canvas id="cv"></canvas></div>
+    <p class="sub">10 chapters, ~10 minutes: query life-cycle, optimizer, execution, storage, columnar, transactions, durability, distributed systems and how the choices ripple. Rendered live in your browser (scrub, chapters, captions, optional narration).</p>
+    <div id="paneL"><div class="stage"><div><div class="screen" id="screen"><canvas id="cv"></canvas></div>
       <div class="ctl"><button id="bPlay">&#9654; Play</button><div class="scrub"><input id="seek" type="range" min="0" max="1000" value="0"><div class="ticks" id="ticks"></div></div><span class="time" id="time">0:00 / 0:00</span>
       <select id="speed"><option value=".5">0.5x</option><option value=".75">0.75x</option><option value="1" selected>1x</option><option value="1.5">1.5x</option><option value="2">2x</option><option value="4">4x</option></select>
       <button id="bCap" class="on">CC</button><button id="bNar">&#128266; Narrate</button><button id="bFs">&#x26F6; Fullscreen</button></div></div>
@@ -55,11 +50,6 @@ function initPlayer() {
   </div>`;
   const $ = id => document.getElementById(id);
   const cv = $('cv'); const R = createRenderer(cv, chapters); const total = R.total;
-  const tabs = { V: [$('tabV'), $('paneV')], L: [$('tabL'), $('paneL')] };
-  const show = k => { for (const j in tabs) { tabs[j][0].classList.toggle('on', j === k); tabs[j][1].style.display = j === k ? '' : 'none'; } if (k !== 'V') $('vid').pause(); };
-  tabs.V[0].onclick = () => show('V'); tabs.L[0].onclick = () => { show('L'); draw(); };
-  $('vid').addEventListener('error', () => { }, true);
-  $('vid').querySelectorAll('source').forEach(s => s.addEventListener('error', () => { $('vnote').textContent = 'No rendered video file found in /video/ yet (run: npm run render:video). Use the Live render player.'; }));
   // chapter list
   const L = R.timeline.chapters; const cols = ['#7aa2f7', '#bb9af7', '#e0af68', '#9ece6a', '#2ac3de', '#2ac3de', '#f7768e', '#f7768e', '#ff9e64', '#c0caf5'];
   $('chlist').innerHTML = L.map((c, i) => `<button data-i="${i}" style="--c:${c.color || cols[i % cols.length]}">${c.num}. ${c.title}<small>${fmt(c.start)} &ndash; ${fmt(c.end)}${c.subtitle ? ' &middot; ' + c.subtitle : ''}</small></button>`).join('');
@@ -85,7 +75,7 @@ function initPlayer() {
     if (k === ' ') { e.preventDefault(); if ($('paneL').style.display !== 'none') play(!playing); } else if (k === 'ArrowRight') seekTo(t + 5); else if (k === 'ArrowLeft') seekTo(t - 5);
     else if (k === ']') seekTo(Math.min(L.length - 1, R.chapterAt(t).index + 1) && L[Math.min(L.length - 1, R.chapterAt(t).index + 1)].start); else if (k === '[') { const c = R.chapterAt(t); seekTo(t - c.start > 3 ? c.start : L[Math.max(0, c.index - 1)].start); }
     else if (k === 'c' || k === 'C') $('bCap').click(); else if (k === 'f' || k === 'F') $('bFs').click(); });
-  function fromHash() { const m = location.hash.match(/(chapter|t)=([\d.]+)/); if (!m) return false; show('L'); if (m[1] === 'chapter') seekTo(L[Math.min(L.length - 1, Math.max(0, +m[2] - 1))].start + .01, false); else seekTo(+m[2], false); return true; }
+  function fromHash() { const m = location.hash.match(/(chapter|t)=([\d.]+)/); if (!m) return false; if (m[1] === 'chapter') seekTo(L[Math.min(L.length - 1, Math.max(0, +m[2] - 1))].start + .01, false); else seekTo(+m[2], false); return true; }
   addEventListener('hashchange', fromHash); fromHash(); draw(); requestAnimationFrame(loop);
   window.__player = { seekTo, play };
 }

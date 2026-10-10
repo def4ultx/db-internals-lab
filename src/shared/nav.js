@@ -1,6 +1,6 @@
 // Usage: import { mountNav } from '/src/shared/nav.js'; mountNav('explore');
 import '/src/shared/theme.css';
-const ITEMS = [['index','Home','/index.html'],['explore','3D Explorer','/explore.html'],['learn','Learn','/learn.html'],['compare','Compare Systems','/compare.html']];
+const ITEMS = [['index','Home','/index.html'],['video','Video','/video.html'],['explore','3D Explorer','/explore.html'],['learn','Learn','/learn.html'],['compare','Compare Systems','/compare.html']];
 export function mountNav(active){
   document.body.classList.add('has-nav');
   const n=document.createElement('nav');n.className='dbnav';
