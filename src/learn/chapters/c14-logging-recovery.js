@@ -1,0 +1,63 @@
+import { h, btn, slider, C } from '../kit.js';
+
+const LOG = [
+  { lsn: 1, t: 'T1', op: 'UPDATE P5 (x: 10 -> 11)', page: 5 }, { lsn: 2, t: 'T2', op: 'UPDATE P3 (y: 7 -> 8)', page: 3 }, { lsn: 3, t: 'CKPT', op: 'BEGIN CHECKPOINT  (ATT={T1,T2}, DPT={P5:1,P3:2})' }, { lsn: 4, t: 'T1', op: 'UPDATE P3 (z: 1 -> 2)', page: 3 }, { lsn: 5, t: 'T1', op: 'COMMIT' }, { lsn: 6, t: 'T3', op: 'UPDATE P5 (x: 11 -> 12)', page: 5 }, { lsn: 7, t: 'T2', op: 'UPDATE P9 (w: 0 -> 1)', page: 9 },
+];
+// disk state at crash: P3 flushed through LSN 2; P5 flushed through LSN 1; P9 never flushed
+const DISK = { 3: 2, 5: 1, 9: 0 };
+function mount(el) {
+  const steps = [
+    { t: 'CRASH. Log on disk holds LSNs 1-7 (forced). Buffer pool lost. Disk pages: P3 pageLSN=2, P5 pageLSN=1, P9 pageLSN=0.', f: () => '' },
+    { t: 'ANALYSIS: scan the log forward from the last checkpoint (LSN 3). Rebuild the Active Transaction Table (ATT) and Dirty Page Table (DPT, with recLSN = first LSN that dirtied the page).', f: () => 'ATT: T1 -> COMMITTED at 5 (so it is removed)\n     T2 -> running (loser)\n     T3 -> running (loser)\nDPT: P5 recLSN=1, P3 recLSN=2, P9 recLSN=7\nRedoLSN = min recLSN = 1' },
+    { t: 'REDO: repeat history. From RedoLSN=1 forward, reapply every update whose page is in DPT and whose pageLSN < record LSN. Losers are redone too.', f: () => LOG.filter((r) => r.page).map((r) => { const dpt = { 5: 1, 3: 2, 9: 7 }[r.page]; const skip = r.lsn < dpt || DISK[r.page] >= r.lsn; return `LSN ${r.lsn} ${r.op.padEnd(26)} ${skip ? 'skip (pageLSN ' + DISK[r.page] + ' >= ' + r.lsn + ' or not in DPT yet)' : 'REDO -> pageLSN=' + r.lsn}`; }).join('\n') },
+    { t: 'UNDO: roll back loser transactions T2 and T3 in reverse LSN order, writing Compensation Log Records (CLRs) so undo itself is never repeated after another crash.', f: () => 'LSN 8  CLR undo LSN 7 (P9: w=0)  undoNext=2\nLSN 9  CLR undo LSN 6 (P5: x=11)  undoNext=null\nLSN 10 CLR undo LSN 2 (P3: y=7)   undoNext=null\nLSN 11 END T2, END T3' },
+    { t: 'Recovered. Committed T1 is durable (x=11, z=2); T2 and T3 never happened. The database is consistent and can accept new transactions.', f: () => 'Final: P5.x=11, P3.y=7, P3.z=2, P9.w=0' },
+  ];
+  let i = 0; const logEl = h('div', { class: 'out' }), msg = h('div', { class: 'cap' }), res = h('div', { class: 'out' });
+  function render() { logEl.textContent = 'WAL\n' + LOG.map((r) => `${String(r.lsn).padStart(2)} | ${r.t.padEnd(4)} | ${r.op}`).join('\n'); msg.textContent = steps[i].t; res.textContent = steps[i].f(); }
+  el.append(logEl, msg, res, h('div', { class: 'row' }, btn('Next phase ▶', () => { i = Math.min(steps.length - 1, i + 1); render(); }), btn('Restart', () => { i = 0; render(); }))); render();
+}
+
+function mountGC(el) {
+  const fs = slider({ label: 'fsync latency (us)', min: 50, max: 5000, step: 50, value: 1000, fmt: (v) => v + ' us', onInput: draw });
+  const cs = slider({ label: 'concurrent committers', min: 1, max: 256, value: 32, onInput: draw });
+  const out = h('div', { class: 'out' });
+  function draw() {
+    const F = fs.get() / 1e6, N = cs.get();
+    const single = 1 / F; // one fsync per commit
+    const grouped = N / F; // N commits share one fsync (upper bound)
+    out.innerHTML = `Each commit must reach stable storage before returning (WAL rule).\nOne fsync per commit:  <b class="bad">${Math.round(single).toLocaleString()}</b> commits/s\nGroup commit (batch ${N} waiting committers per fsync): up to <b class="good">${Math.round(grouped).toLocaleString()}</b> commits/s, latency about ${(F * 1000 * 1.5).toFixed(1)} ms\nEnterprise NVMe with power-loss protection fsyncs in ~20-50 us; consumer SSD 1 ms+; cloud network disk 0.5-2 ms. synchronous_commit=off / innodb_flush_log_at_trx_commit=2 trade up to ~1 s of durability for throughput.`;
+  }
+  el.append(h('div', { class: 'row' }, fs.el, cs.el), out); draw();
+}
+
+export default {
+  n: 14, title: 'Logging & recovery', minutes: 18, cmu: 'CMU 15-445 L20-L21 (Logging, recovery)',
+  components: ['wal', 'recovery', 'buffer-pool'],
+  goals: ['State the write-ahead logging rule and the steal/force trade-off.', 'Walk through ARIES analysis, redo, undo, with LSNs, pageLSN, DPT/ATT and CLRs.', 'Explain group commit, checkpoints, and how MySQL separates redo log, undo log and binlog.'],
+  body: `
+<h2>Problem</h2>
+<p>The buffer pool holds dirty pages that may be flushed at any time (<b>steal</b>: uncommitted changes can reach disk, so we need undo) and committed pages need not be flushed at commit (<b>no-force</b>: committed changes may exist only in memory, so we need redo). Steal + no-force gives the best performance and requires a log. The alternatives: <b>no-steal + force</b> (simple: no undo, no redo, but needs large memory and random writes at commit), shadow paging (write copies and flip a root pointer; fragmentation and random I/O).</p>
+<h2>The WAL rule</h2>
+<ol><li>Before a dirty page is written to disk, all log records up to its <b>pageLSN</b> must be on disk.</li><li>A transaction is committed only when its commit record (and all earlier records) is durable.</li></ol>
+<p>The log is sequential append-only, so a commit costs one sequential write plus an fsync, not scattered page writes.</p>
+<h2>What goes in a record</h2>
+<ul><li><b>Physical</b>: byte-level before/after images of a page region. Simple and idempotent, bulky (full-page images, PostgreSQL after a checkpoint).</li><li><b>Logical</b>: the operation ("INSERT row r into T"). Compact but not idempotent and hard to apply to a partially modified page.</li><li><b>Physiological</b> (ARIES): physical to a page, logical within it ("insert tuple in slot 4 of page 5"). Used by almost everything.</li></ul>
+<p>A record: <code>LSN, prevLSN (per-txn chain), txnId, type, pageId, undoNext, before/after image or redo/undo ops</code>. Each page stores the LSN of the last update applied (<b>pageLSN</b>) so redo is idempotent: apply a record only if pageLSN &lt; record LSN.</p>
+<h2>ARIES recovery</h2>
+<ol><li><b>Analysis</b>: from the last checkpoint, scan forward to rebuild the active transaction table and dirty page table.</li><li><b>Redo</b>: "repeat history": from min recLSN forward, reapply every logged update (including those of eventual losers) if the page is older.</li><li><b>Undo</b>: roll back losers in reverse order. Each undo writes a <b>compensation log record (CLR)</b> with undoNext, so repeated crashes during recovery never undo twice.</li></ol>
+<div data-demo="0"></div>
+<h2>Checkpoints</h2>
+<p>A <b>fuzzy checkpoint</b> records the ATT and DPT without stopping the world, bounding how much log recovery must replay. InnoDB advances its checkpoint LSN as it flushes dirty pages; if the redo log (circular, <code>innodb_redo_log_capacity</code>) fills up before checkpointing catches up, writers stall. PostgreSQL's <code>checkpoint_timeout</code> defaults to 5 min and spreads page writes over 90% of that interval.</p>
+<h2>Commit latency and group commit</h2>
+<p>fsync dominates commit latency. <b>Group commit</b> batches the log tails of concurrent committers into one fsync (PostgreSQL commit_delay, InnoDB's binlog group commit with leader/follower stages).</p>
+<div data-demo="1"></div>
+<h2>MySQL's three logs</h2>
+<p>InnoDB <b>redo log</b> (physiological, crash recovery of the storage engine), InnoDB <b>undo log</b> (old versions for rollback and MVCC), and the server-level <b>binlog</b> (logical row or statement events for replication and point-in-time recovery). Commit uses an internal 2PC between redo (prepare) and binlog so the two agree after a crash. PostgreSQL uses a single WAL for crash recovery, physical replication, and (decoded) logical replication.</p>
+<div class="callout"><div class="t">Other approaches</div><p>VoltDB's <b>command logging</b> logs the transaction invocation, not the data change (cheap, needs determinism). LSM stores log only the memtable (SSTables are immutable). TigerBeetle and FoundationDB log through consensus so the log is also the replication stream. Aurora ships only redo to storage nodes: "the log is the database".</p></div>`,
+  demos: [{ title: 'ARIES crash recovery stepper', caption: 'Seven log records, three transactions, one crash.', mount }, { title: 'Group commit calculator', caption: 'Throughput bound from fsync latency and batching.', mount: mountGC }],
+  tradeoffs: { head: ['Policy', 'Needs undo?', 'Needs redo?', 'Cost'], rows: [['Steal + no-force (ARIES)', 'Yes', 'Yes', 'Best runtime performance, complex recovery'], ['No-steal + force', 'No', 'No', 'Page flush at commit, memory-bound'], ['Steal + force', 'Yes', 'No', 'Random writes at commit'], ['No-steal + no-force', 'No', 'Yes', 'Large transactions limited by RAM'], ['Shadow paging', 'No', 'No', 'Fragmentation, random I/O, copying']] },
+  ripples: [{ to: 'Buffer pool', text: 'eviction must respect the WAL rule (flush log to pageLSN before writing a dirty page) and steal policy determines whether uncommitted pages can be evicted.' }, { to: 'Replication', text: 'the log is the natural replication stream (physical WAL shipping, binlog, Raft log).' }, { to: 'Storage', text: 'checksums plus full-page writes protect against torn pages that redo alone cannot fix.' }, { to: 'Latency', text: 'fsync latency sets the floor of commit latency; group commit and NVRAM change the economics.' }],
+  quiz: [{ q: 'What does steal mean?', options: ['Uncommitted dirty pages may be written to disk', 'Locks can be taken from other txns', 'Logs may be deleted early'], answer: 0, why: 'Steal allows eviction of dirty pages from uncommitted transactions, hence the need for undo.' }, { q: 'Why does ARIES redo losing transactions\' updates?', options: ['By mistake', 'To restore the exact pre-crash state ("repeat history") before undoing', 'To speed up undo'], answer: 1, why: 'Undo is then applied logically on a consistent page state, and CLRs make it restartable.' }, { q: 'How does group commit help?', options: ['It skips fsync', 'Many commits share one fsync', 'It removes the log'], answer: 1, why: 'Throughput scales with batch size while per-fsync latency stays the same.' }],
+  refs: [{ title: 'Mohan et al., ARIES (TODS 1992)', url: 'https://web.stanford.edu/class/cs345d-01/rl/aries.pdf' }, { title: 'CMU 15-445 schedule (Fall 2024)', url: 'https://15445.courses.cs.cmu.edu/fall2024/schedule.html' }, { title: 'PostgreSQL: Write-Ahead Logging', url: 'https://www.postgresql.org/docs/current/wal-intro.html' }, { title: 'MySQL: InnoDB redo log', url: 'https://dev.mysql.com/doc/refman/8.0/en/innodb-redo-log.html' }, { title: 'Verbitski et al., Amazon Aurora (SIGMOD 2017)', url: 'https://www.amazon.science/publications/amazon-aurora-design-considerations-for-high-throughput-cloud-native-relational-databases' }],
+};

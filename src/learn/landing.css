@@ -1,0 +1,24 @@
+.land{max-width:1120px;margin:0 auto;padding:0 24px 80px}
+.hero{padding:70px 0 40px;text-align:center;background:radial-gradient(600px 240px at 50% 0,#1d2a5a55,transparent)}
+.hero h1{font-size:clamp(34px,6vw,60px);line-height:1.08;margin:0 0 16px;letter-spacing:-.02em;background:linear-gradient(90deg,#7aa2f7,#bb9af7 40%,#f7768e);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{max-width:720px;margin:0 auto;font-size:18px;color:var(--dim)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin:36px 0}
+.card{display:block;border:1px solid var(--line);background:linear-gradient(160deg,#171d2e,#121726);border-radius:16px;padding:20px;color:var(--fg);transition:transform .15s,border-color .15s}
+.card:hover{transform:translateY(-3px);border-color:var(--c);text-decoration:none}
+.card .ic{font-size:26px;width:46px;height:46px;border-radius:12px;display:grid;place-items:center;background:color-mix(in srgb,var(--c) 18%,transparent);color:var(--c);margin-bottom:12px}
+.card h3{margin:0 0 6px;font-size:19px;color:#fff}.card p{margin:0;color:var(--dim);font-size:14.5px}.card .go{display:block;margin-top:12px;color:var(--c);font-size:13.5px;font-weight:600}
+.sec{margin:56px 0 0}.sec h2{font-size:26px;margin:0 0 6px}.sec>p{color:var(--dim);margin:0 0 18px;max-width:760px}
+.life{border:1px solid var(--line);border-radius:16px;background:#0f1424;padding:14px}
+.life svg{width:100%;height:auto;display:block}
+.life .box rect{fill:#171d2e;stroke-width:1.5}.life text{fill:#d7def5;font:600 12px var(--sans)}.life .sub{fill:#8a93b5;font:11px var(--mono)}
+.life .pkt{filter:drop-shadow(0 0 5px currentColor)}
+.life .cap{margin:10px 6px 0;font-size:14px;color:var(--dim);min-height:42px}.life .cap b{color:#fff}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.col{border:1px solid var(--line);border-radius:16px;padding:18px;background:#121726}
+.col h3{margin:0 0 4px;font-size:19px}.col .tag{font-size:12px;letter-spacing:.1em;text-transform:uppercase}
+.col ul{margin:10px 0 0;padding-left:18px;color:#cdd5ee;font-size:14.5px}.col li{margin:4px 0}
+.col svg{width:100%;height:70px;margin-top:8px}
+.stats{display:flex;flex-wrap:wrap;gap:30px;margin-top:40px;justify-content:center;color:var(--dim);font-size:14px}.stats b{display:block;font-size:26px;color:#fff}
+.foot{margin-top:60px;text-align:center;color:var(--dim);font-size:13px}
+@media(max-width:760px){.two{grid-template-columns:1fr}.hero{padding-top:40px}}
+@media(prefers-reduced-motion:reduce){.life animateMotion{display:none}}

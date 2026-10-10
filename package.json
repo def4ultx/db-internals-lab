@@ -1,0 +1,23 @@
+{
+  "name": "db-internals-lab",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "render:video": "node scripts/render-video.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "three": "^0.186.1",
+    "vite": "^8.3.4"
+  },
+  "type": "module",
+  "devDependencies": {
+    "puppeteer-core": "^24.43.1"
+  }
+}
