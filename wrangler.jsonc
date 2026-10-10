@@ -1,0 +1,7 @@
+{
+  "name": "db-internals-lab",
+  "compatibility_date": "2026-10-10",
+  "assets": {
+    "directory": "./dist"
+  }
+}
