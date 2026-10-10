@@ -9,7 +9,6 @@ export default defineConfig({
         index: resolve(__dirname, 'index.html'),
         explore: resolve(__dirname, 'explore.html'),
         learn: resolve(__dirname, 'learn.html'),
-        video: resolve(__dirname, 'video.html'),
         compare: resolve(__dirname, 'compare.html'),
       },
     },

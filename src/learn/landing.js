@@ -21,7 +21,6 @@ app.innerHTML = `<div class="land">
 <section class="hero"><h1>See inside the database.</h1>
 <p>An interactive lab for how SQL engines really work: from a parsed query to bytes on disk, and across a cluster. Built around CMU 15-445 and 15-721, with a focus on how one design choice ripples through every other component.</p></section>
 <section class="cards">
- <a class="card" style="--c:#f7768e" href="/video.html"><div class="ic">▶</div><h3>Video</h3><p>A narrated, animated tour of a query's life, chapter by chapter.</p><span class="go">Watch →</span></a>
  <a class="card" style="--c:#2ac3de" href="/explore.html"><div class="ic">◈</div><h3>3D Explorer</h3><p>Fly through components, zoom into a B+tree or a Raft log, swap design choices and see what changes.</p><span class="go">Explore →</span></a>
  <a class="card" style="--c:#9ece6a" href="/learn.html"><div class="ic">☰</div><h3>Learn</h3><p>An 18-chapter course with interactive demos, trade-off tables, quizzes and CMU references.</p><span class="go">Start course →</span></a>
  <a class="card" style="--c:#e0af68" href="/compare.html"><div class="ic">⇄</div><h3>Compare</h3><p>MySQL, Postgres, DuckDB, ClickHouse, Spark, Cassandra, FoundationDB and more, side by side.</p><span class="go">Compare →</span></a>
